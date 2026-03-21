@@ -1,0 +1,309 @@
+=====================================================
+AUTOENCODER PARA MANTENIMIENTO PREDICTIVO (PLAYBOOK)
+=====================================================
+
+-----------------------------------------------------
+PARTE 0 — OBJETIVO DEL PROYECTO
+-----------------------------------------------------
+
+Objetivo general:
+Construir un modelo de autoencoder que aprenda el comportamiento normal de un sistema industrial y detecte anomalías utilizando el error de reconstrucción.
+
+Idea clave:
+El modelo:
+- aprende solo datos normales
+- reconstruye inputs
+- falla al reconstruir datos anómalos
+
+Error alto = posible anomalía
+
+Aplicación industrial:
+- motores eléctricos
+- bombas
+- reductores
+- sistemas térmicos
+- instrumentación industrial
+
+
+-----------------------------------------------------
+PARTE 1 — CARGA Y EXPLORACIÓN DE DATOS
+-----------------------------------------------------
+
+Objetivo:
+Entender completamente el dataset antes de modelar.
+
+Pasos:
+1. Cargar dataset desde Hugging Face
+2. Convertir a pandas
+3. Unir splits (train, validation, test)
+4. Revisar:
+   - dimensiones
+   - tipos de datos
+   - valores nulos
+   - distribución de variables
+5. Analizar variable objetivo (Engine Condition)
+
+Preguntas clave:
+- ¿Cuántas filas hay?
+- ¿Cuántas variables?
+- ¿Hay desbalance de clases?
+- ¿Qué variables parecen importantes?
+
+
+-----------------------------------------------------
+PARTE 2 — DEFINICIÓN DEL PROBLEMA
+-----------------------------------------------------
+
+Objetivo:
+n no supervisado.
+
+Pasos:
+1. Identificar variable target
+2. Separar:
+   - datos normales
+   - datos anómalos
+3. Decidir entrenar SOLO con normales
+
+Concepto clave:
+No estamos haciendo clasificación.
+Estamos aprendiendo "normalidad".
+
+
+-----------------------------------------------------
+PARTE 3 — PREPARACIÓN DE FEATURES
+-----------------------------------------------------
+
+Objetivo:
+Preparar correctamente los datos para el modelo.
+
+Pasos:
+1. Definir columnas de entrada (features)
+2. Eliminar columnas irrelevantes (si existen)
+3. Separar:
+   - X (features)
+   - y (solo para evaluación)
+
+Importante:
+El modelo NO usa y para entrenar.
+
+
+-----------------------------------------------------
+PARTE 4 — SPLIT Y ESCALADO
+-----------------------------------------------------
+
+Objetivo:
+Preparar datos para el autoencoder.
+
+Pasos:
+1. Separar normales:
+   - train (80%)
+   - validation (20%)
+2. Aplicar StandardScaler:
+   - fit SOLO en train normal
+   - transform en:
+     - validation
+     - dataset completo
+
+Concepto clave:
+Evitar data leakage.
+
+
+-----------------------------------------------------
+PARTE 5 — CONSTRUCCIÓN DEL AUTOENCODER
+-----------------------------------------------------
+
+Objetivo:
+Crear arquitectura de red neuronal.
+
+Pasos:
+1. Definir dimensión de entrada
+2. Construir red:
+   - capa de entrada
+   - encoder (reducción)
+   - bottleneck (compresión)
+   - decoder (reconstrucción)
+3. Definir función de pérdida:
+   - MSE
+
+Concepto clave:
+El bottleneck obliga al modelo a aprender estructura.
+
+
+-----------------------------------------------------
+PARTE 6 — ENTRENAMIENTO DEL MODELO
+-----------------------------------------------------
+
+Objetivo:
+Entrenar solo con comportamiento normal.
+
+Pasos:
+1. Entrenar:
+   input = X
+   output = X
+2. Usar:
+   - validation set
+   - early stopping
+3. Monitorear:
+   - loss
+   - val_loss
+
+Qué observar:
+- ¿el modelo converge?
+- ¿hay overfitting?
+
+
+-----------------------------------------------------
+PARTE 7 — ERROR DE RECONSTRUCCIÓN
+-----------------------------------------------------
+
+Objetivo:
+Convertir el modelo en detector de anomalías.
+
+Pasos:
+1. Predecir reconstrucción:
+   X → X_hat
+2. Calcular error:
+   MSE por fila
+3. Obtener:
+   - error en normales
+   - error en anómalos
+
+Concepto clave:
+Error = anomaly score
+
+
+-----------------------------------------------------
+PARTE 8 — DEFINICIÓN DE THRESHOLD
+-----------------------------------------------------
+
+Objetivo:
+Definir cuándo algo es anomalía.
+
+Pasos:
+1. Calcular error en validation normal
+2. Definir threshold:
+   percentil 95
+3. Interpretar:
+   error > threshold → anomalía
+
+Concepto clave:
+Threshold = decisión operativa
+
+
+-----------------------------------------------------
+PARTE 9 — DETECCIÓN DE ANOMALÍAS
+-----------------------------------------------------
+
+Objetivo:
+Clasificar registros.
+
+Pasos:
+1. Aplicar threshold a todo el dataset
+2. Crear variable:
+   pred_anomaly
+3. Comparar con realidad (y)
+
+Concepto clave:
+Convertimos un score continuo en clasificación
+
+
+-----------------------------------------------------
+PARTE 10 — EVALUACIÓN DEL MODELO
+-----------------------------------------------------
+
+Objetivo:
+Validar desempeño.
+
+Pasos:
+1. Matriz de confusión
+2. Classification report
+3. ROC-AUC usando reconstruction error
+
+Qué analizar:
+- detección de anomalías
+- falsos positivos
+
+
+-----------------------------------------------------
+PARTE 11 — VISUALIZACIÓN
+-----------------------------------------------------
+
+Objetivo:
+Entender el comportamiento del modelo.
+
+Pasos:
+1. Histograma:
+   - error normal vs anómalo
+2. Línea de threshold
+3. Curvas de entrenamiento
+
+Concepto clave:
+Separación visual = modelo útil
+
+
+-----------------------------------------------------
+PARTE 12 — INTERPRETACIÓN DE RESULTADOS
+-----------------------------------------------------
+
+Objetivo:
+Traducir resultados a contexto industrial.
+
+Preguntas:
+- ¿qué significa error alto?
+- ¿qué variables pueden causar anomalía?
+- ¿cómo se usaría en planta?
+
+Ejemplos:
+- aumento de temperatura
+- caída de presión
+- comportamiento inestable
+
+
+-----------------------------------------------------
+PARTE 13 — LIMITACIONES DEL MODELO
+-----------------------------------------------------
+
+Objetivo:
+Entender limitaciones.
+
+Limitaciones:
+- no usa tiempo (snapshot)
+- no detecta tendencias
+- depende de datos normales
+
+
+-----------------------------------------------------
+PARTE 14 — SIGUIENTE NIVEL
+-----------------------------------------------------
+
+Mejoras:
+1. Ventanas temporales
+2. LSTM Autoencoder
+3. Threshold dinámico
+4. Interpretabilidad
+
+Aplicación futura:
+- monitoreo en tiempo real
+- alertas automáticas
+- dashboards industriales
+
+
+-----------------------------------------------------
+CIERRE
+-----------------------------------------------------
+
+Este proyecto es la base de:
+
+- mantenimiento predictivo
+- sistemas industriales inteligentes
+- soluciones vendibles
+
+Trabajo recomendado:
+Resolver parte por parte en notebook.
+
+Al completar cada parte:
+validar resultados antes de avanzar.
+
+=====================================================
+FIN DEL DOCUMENTO
+=====================================================
